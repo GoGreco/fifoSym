@@ -1,84 +1,73 @@
-#defining processes (processName, arrivalTime, execTime, first time being executed)
-#need waiting time
-p1 = ['p1', 0, 1, 0]
-p2 = ['p2', 0, 2, 0]
-p3 = ['p3', 1, 1, 0]
-p4 = ['p4', 0, 15, 0]
-p5 = ['p5', 2, 10, 0]
+p1 = ['p1', 0, 1]
+p2 = ['p2', 0, 2]
+p3 = ['p3', 1, 1]
+p4 = ['p4', 0, 15]
+p5 = ['p5', 2, 10]
 
-waitingTime = []
-responseTime = []
-returnTime = []
+#definindo fila
+fila = [p1, p2, p3, p4, p5]
 
-#queue generation
-queue = [p1, p2, p3, p4, p5]
+#organizar a fila
+fila = sorted(fila, key= lambda x : x[1])
 
-# Sort the queue based on the first value of each tuple
-queue = sorted(queue, key=lambda x: x[1])
-
-#flag variable
-completion = 0
-
-#defines the time in wich the simulation will occur
-#all the time units are seconds
-time = 0
+#definindo um tempo
+tempo = 0
 overhead = 1
-quantum = 2
+
+#criar uma flag
+processosCompletos = 0
+
+#tempos de resposta, retorno espera
+'''
+tempo de resposta (inicio de exec - chegada)
+tempo de retorno (final de execução - chegada)
+tempo de espera (tempo de retorno - tempo de resposta)
+'''
+tempoResposta = []
+tempoRetorno = []
+tempoEspera = []
+
+
+#criar o loop de execução
 n = 0
 
-while completion != 5:
+while processosCompletos != 5:
+
+    #adicionando o nome do processo atualmente no registrador
+    #e também o tempo atual antes de quaisquer alterações, menos o tempo de chegada do processo na fila
+
+    tempoResposta.append([fila[n][0], tempo - fila[n][1]])
+
+    #como o processo, ficará no registrador até ser completo, simplesmente vou somar o tempo de execução no tempo cronológico do processo, e tornar o tempo de execução restante 0
+    tempo += fila[n][2]
+    fila[n][2] = 0
+    processosCompletos += 1
     
-    #gives the reponse time comparing the current Time - arrivalTime(queue[n][1]). 
-    #queue[n][3]works as a flag to see if the process has entered the simulation before
-    if queue[n][3] == 0: 
-        queue[n][3] = 1
-        responseTime.append([queue[n][0], time-queue[n][1]])
+    #adicionando o nome do processo que acabou de terminar seu tempo no processador
+    #e também o tempo atual após as mudanças causadas pelo processo meno o tempo de chegada do mesmo
+    tempoRetorno.append([fila[n][0], tempo - fila[n][1]])
 
-    #checking if the execTime in less than the quantum (but still more than 0),
-    #it than, subtracts the execTime by itself, and adds to completion
-    #also the return time is calculated (Final execTime - arrivalTime)
-    if  0<queue[n][2]<quantum:
-        queue[n][2] -= queue[n][2]
-        time += queue[n][2]
-        time += overhead
-        completion += 1
-        returnTime.append([queue[n][0], time-queue[n][1]])
-        n+=1
-    
-
-    elif queue[n][2]>= quantum:
-        queue[n][2] -=quantum 
-        time += quantum
-        time += overhead
-
-        #when the execTime becomes 0, the return time is calculated (Final execTime - arrivalTime)
-        # it also increasses the flag variable in 1
-        if queue[n][2] == 0:
-            completion += 1
-            returnTime.append([queue[n][0], time-queue[n][1]])
-            n+=1
-    
-
-    
-
-#calculates the waitingTime of each program by compairing the returnTime and the responseTime
-#also calculates the avarage for each return and response times
-sumResponse = 0
-sumReturn = 0
+    #após a execução do processo, os barramentos trocam quem está na cpu, e gera-se overhead
+    tempo += overhead
+    n+=1
 
 
-for x in range(len(responseTime)):
-    waitingTime.append([queue[x][0], returnTime[x][1] - responseTime[x][1]])
-    sumResponse += responseTime[x][1]
-    sumReturn += returnTime[x][1]
+somaReposta = 0
+somaRetorno = 0
+for n in range(len(tempoResposta)):
+    tempoEspera.append([fila[n][0], tempoRetorno[n][1]-tempoResposta[n][1]])
 
-averageResponse = sumResponse/5
-averageReturn = sumReturn/5
+    somaReposta+=tempoResposta[n][1] 
+    somaRetorno+=tempoRetorno[n][1]
 
 
-print("Resultados para o Round Robin: ")
-print(f"A ordem de atendimento foi: {queue[0][0]}->{queue[1][0]}->{queue[2][0]}->{queue[3][0]}->{queue[4][0]};")
-print(f"Os tempos de resposta foram: {responseTime[0]}, {responseTime[1]}, {responseTime[3]}, {responseTime[2]}, {responseTime[4]}")
-print(f"Os tempos de retorno foram: {returnTime[0]}, {returnTime[1]}, {returnTime[3]}, {returnTime[2]}, {returnTime[4]}")
-print(f"A média dos tempos de resposta foi: {averageResponse}")
-print(f"A media dos tempo de retorno é de: {averageReturn}")
+mediaResposta = somaReposta/len(tempoResposta) 
+mediaRetorno = somaRetorno/len(tempoResposta)
+
+print("p1->p2->p4->p3->p5")
+
+print(f'''Tempo de resposta: {tempoResposta}''')
+print(f'''Tempo de retorno: {tempoRetorno}''')
+print(f'''Tempo de espera: {tempoEspera}''')
+print(f'''A media do tempo de resposta é: {mediaResposta}''')
+print(f'''A media do tempo de retorno é: {mediaRetorno}''')
